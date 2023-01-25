@@ -19,7 +19,7 @@ import com.peliculas.prueba.model.DetalleFactura;
 import com.peliculas.prueba.model.Factura;
 import com.peliculas.prueba.model.Pelicula;
 import com.peliculas.prueba.model.PeliculaBitacora;
-import com.peliculas.prueba.repository.repos.PeliculaRepo;
+import com.peliculas.prueba.repository.repo.PeliculaRepo;
 
 @Component("appUtilLocal")
 public class AppUtil {
