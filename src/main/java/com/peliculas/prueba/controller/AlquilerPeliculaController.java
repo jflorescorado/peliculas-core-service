@@ -1,93 +1,136 @@
 package com.peliculas.prueba.controller;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.peliculas.prueba.commons.AppConstants;
+import com.peliculas.prueba.consumer.Consumer;
 import com.peliculas.prueba.exception.AppServiceException;
 import com.peliculas.prueba.model.AlquilerPelicula;
 import com.peliculas.prueba.service.AlquilerPeliculaService;
-import com.peliculas.prueba.util.ApiResponse;
+import com.peliculas.prueba.util.ResponseEntityUtil;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 @RestController
 @RequestMapping("/alquilerPelicula")
+@Api(value = "/alquilerPelicula", tags = "AlquilerPeliculaController")
 public class AlquilerPeliculaController {
 
 	@Autowired
 	AlquilerPeliculaService alquilerPeliculaService;
-	
+
+	@Autowired
+	private Consumer consumer;
+
+	@Autowired
+	ResponseEntityUtil responseEntityUtil;
+
 	private static final Logger logger = LoggerFactory.getLogger(AlquilerPeliculaController.class);
-	
-	@PostMapping("/")
-	public ResponseEntity<ApiResponse<AlquilerPelicula>> updateAlquilerPelicula(@RequestBody AlquilerPelicula alquilerPelicula) {
+
+	@ApiOperation(value = "Proceso para actualizar registro de alquiler de pelicula")
+	@PutMapping("/")
+	public ResponseEntity<?> updateAlquilerPelicula(@RequestHeader(name = "Authorization") String token,
+			@RequestBody AlquilerPelicula alquilerPelicula) {
+		ResponseEntity<?> response = null;
 		try {
-			AlquilerPelicula response = alquilerPeliculaService.updateAlquilerBitacora(alquilerPelicula);
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.OK, "Se guardo factura exitosamente", response),
-					HttpStatus.OK);
+			// Valido token
+			if (!consumer.validateToken(token)) {
+				return response = responseEntityUtil.createFailResponse(null, AppConstants.CODE_UNAUTHORIZED,
+						AppConstants.DESCRIPTION_UNAUTHORIZED);
+			}
+			
+			response = responseEntityUtil.createOkResponse(alquilerPeliculaService.updateAlquilerBitacora(alquilerPelicula),
+					AppConstants.CODE_SUCCESS, AppConstants.DESCRIPTION_SUCCESS);
 		} catch (AppServiceException e) {
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.CONFLICT, e.getMessage(), null),
-					HttpStatus.CONFLICT);
+			logger.error(AppConstants.APP_EXCEPTION, e);
+			response = responseEntityUtil.createFailResponse(null, e.getCode(), e.getMessage());
 		} catch (Exception e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), null),
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error(AppConstants.EXCEPTION, e);
+			response = responseEntityUtil.createFailResponse(null, AppConstants.CODE_ERROR,
+					AppConstants.DEFAULT_ERROR_DESCRIPTION);
 		}
+		return response;
 	}
-	
+
+	@ApiOperation(value = "Proceso para obtener alquiler de pelicula por usuario")
 	@GetMapping("/{usuario}")
-	public ResponseEntity<ApiResponse<List<AlquilerPelicula>>> findByUsuario(@PathVariable String usuario) {
+	public ResponseEntity<?> findByUsuario(@RequestHeader(name = "Authorization") String token,
+			@PathVariable String usuario) {
+		ResponseEntity<?> response = null;
 		try {
-			List<AlquilerPelicula> response = alquilerPeliculaService.findByUsuario(usuario);
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.OK, "", response), HttpStatus.OK);
+			// Valido token
+			if (!consumer.validateToken(token)) {
+				return response = responseEntityUtil.createFailResponse(null, AppConstants.CODE_UNAUTHORIZED,
+						AppConstants.DESCRIPTION_UNAUTHORIZED);
+			}
+			
+			response = responseEntityUtil.createOkResponse(alquilerPeliculaService.findByUsuario(usuario),
+					AppConstants.CODE_SUCCESS, AppConstants.DESCRIPTION_SUCCESS);
 		} catch (AppServiceException e) {
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.CONFLICT, e.getMessage(), null),
-					HttpStatus.CONFLICT);
+			logger.error(AppConstants.APP_EXCEPTION, e);
+			response = responseEntityUtil.createFailResponse(null, e.getCode(), e.getMessage());
 		} catch (Exception e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), null),
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error(AppConstants.EXCEPTION, e);
+			response = responseEntityUtil.createFailResponse(null, AppConstants.CODE_ERROR,
+					AppConstants.DEFAULT_ERROR_DESCRIPTION);
 		}
+		return response;
 	}
-	
+
+	@ApiOperation(value = "Proceso para obtener todos los registros de alquiler pelicula")
 	@GetMapping("/")
-	public ResponseEntity<ApiResponse<List<AlquilerPelicula>>> findAllFactura() {
+	public ResponseEntity<?> findAllFactura(@RequestHeader(name = "Authorization") String token) {
+		ResponseEntity<?> response = null;
 		try {
-			List<AlquilerPelicula> response = alquilerPeliculaService.findAllAlquilerBitacora();
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.OK, "", response), HttpStatus.OK);
+			// Valido token
+			if (!consumer.validateToken(token)) {
+				return response = responseEntityUtil.createFailResponse(null, AppConstants.CODE_UNAUTHORIZED,
+						AppConstants.DESCRIPTION_UNAUTHORIZED);
+			}
+
+			response = responseEntityUtil.createOkResponse(alquilerPeliculaService.findAllAlquilerBitacora(),
+					AppConstants.CODE_SUCCESS, AppConstants.DESCRIPTION_SUCCESS);
 		} catch (AppServiceException e) {
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.CONFLICT, e.getMessage(), null),
-					HttpStatus.CONFLICT);
+			logger.error(AppConstants.APP_EXCEPTION, e);
+			response = responseEntityUtil.createFailResponse(null, e.getCode(), e.getMessage());
 		} catch (Exception e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), null),
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error(AppConstants.EXCEPTION, e);
+			response = responseEntityUtil.createFailResponse(null, AppConstants.CODE_ERROR,
+					AppConstants.DEFAULT_ERROR_DESCRIPTION);
 		}
+		return response;
 	}
-	
+
+	@ApiOperation(value = "Proceso para eliminar alquiler de pelicula por id")
 	@DeleteMapping("/{id}")
-	public ResponseEntity<ApiResponse<Void>> deleteAlquilerPelicula(@PathVariable Long id) {
+	public ResponseEntity<?> deleteAlquilerPelicula(@RequestHeader(name = "Authorization") String token,
+			@PathVariable Long id) {
+		ResponseEntity<?> response = null;
 		try {
 			alquilerPeliculaService.deletefindAlquilerBitacora(id);
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.OK, "Factura eliminada con éxito", null),
-					HttpStatus.OK);
+
+			response = responseEntityUtil.createOkResponse(null, AppConstants.CODE_SUCCESS,
+					"registro de alquiler de pelicula eliminado existosamente");
 		} catch (AppServiceException e) {
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.CONFLICT, e.getMessage(), null),
-					HttpStatus.CONFLICT);
+			logger.error(AppConstants.APP_EXCEPTION, e);
+			response = responseEntityUtil.createFailResponse(null, e.getCode(), e.getMessage());
 		} catch (Exception e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), null),
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error(AppConstants.EXCEPTION, e);
+			response = responseEntityUtil.createFailResponse(null, AppConstants.CODE_ERROR,
+					AppConstants.DEFAULT_ERROR_DESCRIPTION);
 		}
+		return response;
 	}
 }
